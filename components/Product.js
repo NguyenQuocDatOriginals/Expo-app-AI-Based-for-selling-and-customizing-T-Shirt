@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
-import ProductDetail from './ProductDetail';
+import ProductDetail from '../components/ProductDetail';
 
 const demoProducts = [
   { 
