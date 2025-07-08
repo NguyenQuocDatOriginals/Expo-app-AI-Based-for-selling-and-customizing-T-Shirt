@@ -59,11 +59,11 @@ export default function Product() {
       if (found) {
         return prev.map(item =>
           item.id === product.id && item.size === size && item.color === color
-            ? { ...item, quantity: Math.min(item.quantity + 1, product.stock) }
+            ? { ...item, quantity: Math.min(item.quantity + product.quantity, product.stock) }
             : item
         );
       }
-      return [...prev, { ...product, size, color, quantity: 1 }];
+      return [...prev, { ...product, size, color, quantity: product.quantity }];
     });
   };
 
