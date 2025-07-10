@@ -3,39 +3,46 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, Image, StyleSheet, S
 import ProductDetail from '../components/ProductDetail';
 
 const demoProducts = [
-  { 
-    id: 1, 
-    name: 'T-Shirt Basic', 
-    price: 150000, 
-    stock: 20, 
-    category: 'Áo thun', 
+  {
+    id: 1,
+    name: 'T-Shirt Basic',
+    price: 150000,
+    category: 'Áo thun',
     image: require('../assets/img/tshirt-basic.png'),
-    description: 'Áo thun chất liệu cotton 100%, thoáng mát, phù hợp cho mọi hoạt động thường ngày. Thiết kế đơn giản, dễ phối đồ.', 
-    sizes: ['S', 'M', 'L', 'XL'], 
-    colors: ['Trắng', 'Đen', 'Xanh'] 
+    description: 'Cotton 100%, thoáng mát, thiết kế tối giản.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Trắng', 'Đen', 'Xanh']
   },
-  { 
-    id: 2, 
-    name: 'T-Shirt Premium', 
-    price: 250000, 
-    stock: 10, 
-    category: 'Áo thun', 
+  {
+    id: 2,
+    name: 'T-Shirt Premium',
+    price: 250000,
+    category: 'Áo thun',
     image: require('../assets/img/tshirt-premium.png'),
-    description: 'Áo thun cao cấp, mềm mại, co giãn tốt, bền màu.', 
-    sizes: ['S', 'M', 'L', 'XL'], 
-    colors: ['Trắng', 'Đen'] 
+    description: 'Chất liệu cao cấp, co giãn tốt, bền đẹp.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Trắng', 'Đen']
   },
-  { 
-    id: 3, 
-    name: 'Hoodie', 
-    price: 350000, 
-    stock: 5, 
-    category: 'Áo khoác', 
+  {
+    id: 3,
+    name: 'Hoodie',
+    price: 350000,
+    category: 'Áo khoác',
     image: require('../assets/img/hoodie.png'),
-    description: 'Hoodie dày dặn, giữ ấm tốt, phong cách trẻ trung.', 
-    sizes: ['M', 'L', 'XL'], 
-    colors: ['Đen', 'Xám'] 
+    description: 'Dày dặn, giữ ấm, phong cách streetwear.',
+    sizes: ['M', 'L', 'XL'],
+    colors: ['Đen', 'Xám']
   },
+  {
+    id: 4,
+    name: 'Sweater',
+    price: 320000,
+    category: 'Áo khoác',
+    image: require('../assets/img/sweater.png'),
+    description: 'Chất liệu len cao cấp, mềm mại, giữ nhiệt tốt trong thời tiết lạnh.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Xám', 'Xanh navy', 'Nâu']
+  }
 ];
 
 export default function Product() {
@@ -49,21 +56,22 @@ export default function Product() {
     p.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAddToCart = (product) => {
+  const handleAddOrUpdateCart = (product, quantity = 1) => {
+    const size = product.size || product.sizes[0];
+    const color = product.color || product.colors[0];
+
     setCart(prev => {
-      const size = product.size || (product.sizes ? product.sizes[0] : '');
-      const color = product.color || (product.colors ? product.colors[0] : '');
-      const found = prev.find(
-        item => item.id === product.id && item.size === size && item.color === color
+      const index = prev.findIndex(item =>
+        item.id === product.id && item.size === size && item.color === color
       );
-      if (found) {
-        return prev.map(item =>
-          item.id === product.id && item.size === size && item.color === color
-            ? { ...item, quantity: Math.min(item.quantity + product.quantity, product.stock) }
-            : item
-        );
+
+      if (index !== -1) {
+        const updated = [...prev];
+        updated[index].quantity = quantity;
+        return updated;
       }
-      return [...prev, { ...product, size, color, quantity: product.quantity }];
+
+      return [...prev, { ...product, size, color, quantity }];
     });
   };
 
@@ -71,30 +79,39 @@ export default function Product() {
     setCart(prev =>
       prev.map(item =>
         item.id === id && item.size === size && item.color === color
-          ? { ...item, quantity: Math.max(1, Math.min(item.quantity + delta, item.stock)) }
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
           : item
       )
     );
   };
 
   const handleRemoveFromCart = (id, size, color) => {
-    setCart(prev => prev.filter(item => !(item.id === id && item.size === size && item.color === color)));
+    Alert.alert(
+      'Xác nhận',
+      'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: () =>
+            setCart(prev =>
+              prev.filter(item => !(item.id === id && item.size === size && item.color === color))
+            )
+        }
+      ]
+    );
   };
 
-  const handleUpdateCartOption = (id, oldSize, oldColor, optionType, value) => {
+  const handleUpdateCartOption = (id, oldSize, oldColor, type, value) => {
     setCart(prev => {
-      const idx = prev.findIndex(item => item.id === id && item.size === oldSize && item.color === oldColor);
-      if (idx === -1) return prev;
-      const item = prev[idx];
-      const newOption = { ...item, [optionType]: value };
-      const existIdx = prev.findIndex(
-        i => i.id === id && i.size === (optionType === 'size' ? value : oldSize) && i.color === (optionType === 'color' ? value : oldColor)
+      const idx = prev.findIndex(item =>
+        item.id === id && item.size === oldSize && item.color === oldColor
       );
-      if (existIdx !== -1 && existIdx !== idx) {
-        const merged = { ...prev[existIdx], quantity: prev[existIdx].quantity + item.quantity };
-        return prev.filter((_, i) => i !== idx && i !== existIdx).concat(merged);
-      }
-      return prev.map((it, i) => i === idx ? newOption : it);
+      if (idx === -1) return prev;
+      const updated = [...prev];
+      updated[idx][type] = value;
+      return updated;
     });
   };
 
@@ -105,131 +122,99 @@ export default function Product() {
       <ProductDetail
         product={selectedProduct}
         onBack={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
+        cart={cart}
+        setCart={setCart}
+        onAddOrUpdateCart={handleAddOrUpdateCart}
       />
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>🛍️ Sản phẩm nổi bật</Text>
       <TextInput
         style={styles.search}
-        placeholder="🔍 Tìm kiếm sản phẩm"
+        placeholder="Tìm kiếm sản phẩm..."
+        placeholderTextColor="#7A7A7A"
         value={search}
         onChangeText={setSearch}
       />
+
       <FlatList
         data={filtered}
         keyExtractor={item => item.id.toString()}
         horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingVertical: 12 }}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.productCard}
-            onPress={() => setSelectedProduct(item)}
-          >
-            <Image
-              source={item.image}
-              style={styles.productImage}
-              resizeMode="cover"
-            />
-            <Text style={styles.productName}>{item.name}</Text>
-            <Text style={styles.productCategory}>{item.category}</Text>
-            <Text style={styles.productPrice}>{item.price.toLocaleString()} VNĐ</Text>
-            <Text style={[styles.productStock, { color: item.stock > 0 ? '#388e3c' : '#e53935' }]}>
-              {item.stock > 0 ? `Còn ${item.stock} sản phẩm` : 'Hết hàng'}
-            </Text>
+          <TouchableOpacity style={styles.card} onPress={() => setSelectedProduct(item)}>
+            <Image source={item.image} style={styles.image} />
+            <View style={styles.info}>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.category}>{item.category}</Text>
+              <Text style={styles.price}>{item.price.toLocaleString()} VNĐ</Text>
+            </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={
-          <Text style={styles.notFound}>Không tìm thấy sản phẩm phù hợp.</Text>
-        }
       />
+
       <Text style={styles.cartTitle}>🛒 Giỏ hàng của bạn</Text>
       <View style={styles.cartBox}>
         {cart.length === 0 ? (
-          <Text style={styles.cartEmpty}>Giỏ hàng trống.</Text>
+          <Text style={styles.emptyCart}>Chưa có sản phẩm nào trong giỏ.</Text>
         ) : (
-          cart.map(item => {
-            const productOrigin = products.find(p => p.id === item.id);
-            return (
-              <View key={item.id + (item.size || '') + (item.color || '')} style={styles.cartItem}>
-                <Image source={item.image} style={styles.cartImage} />
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.cartName}>{item.name}</Text>
-                  <Text style={styles.cartCategory}>{item.category}</Text>
-                  <View style={styles.row}>
-                    <Text style={styles.cartLabel}>Kích cỡ:</Text>
-                    <ScrollView horizontal>
-                      {productOrigin?.sizes?.map(size => (
-                        <TouchableOpacity
-                          key={size}
-                          style={[
-                            styles.optionBtn,
-                            item.size === size && styles.optionBtnActive
-                          ]}
-                          onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'size', size)}
-                        >
-                          <Text style={{ color: item.size === size ? '#fff' : '#222' }}>{size}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                  <View style={styles.row}>
-                    <Text style={styles.cartLabel}>Màu sắc:</Text>
-                    <ScrollView horizontal>
-                      {productOrigin?.colors?.map(color => (
-                        <TouchableOpacity
-                          key={color}
-                          style={[
-                            styles.optionBtn,
-                            item.color === color && styles.optionBtnActive
-                          ]}
-                          onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'color', color)}
-                        >
-                          <Text style={{ color: item.color === color ? '#fff' : '#222' }}>{color}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                  <View style={styles.row}>
-                    <Text style={styles.cartLabel}>Số lượng:</Text>
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() => handleChangeQuantity(item.id, item.size, item.color, -1)}
-                      disabled={item.quantity === 1}
-                    >
-                      <Text style={styles.qtyBtnText}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.qtyText}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() => handleChangeQuantity(item.id, item.size, item.color, 1)}
-                      disabled={item.quantity === item.stock}
-                    >
-                      <Text style={styles.qtyBtnText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.cartPrice}>
-                    {(item.price * item.quantity).toLocaleString()} VNĐ
-                  </Text>
+          cart.map(item => (
+            <View key={`${item.id}-${item.size}-${item.color}`} style={styles.cartItem}>
+              <Image source={item.image} style={styles.cartImage} />
+              <View style={styles.cartInfo}>
+                <Text style={styles.cartName}>{item.name}</Text>
+                <View style={styles.optionRow}>
+                  <Text style={styles.cartLabel}>Size:</Text>
+                  <ScrollView horizontal>
+                    {products.find(p => p.id === item.id).sizes.map(size => (
+                      <TouchableOpacity
+                        key={size}
+                        onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'size', size)}
+                        style={[styles.optionBtn, item.size === size && styles.optionActive]}
+                      >
+                        <Text style={[styles.optionText, item.size === size && styles.optionTextActive]}>{size}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
-                <TouchableOpacity
-                  style={styles.deleteBtn}
-                  onPress={() => handleRemoveFromCart(item.id, item.size, item.color)}
-                >
-                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Xóa</Text>
-                </TouchableOpacity>
+                <View style={styles.optionRow}>
+                  <Text style={styles.cartLabel}>Màu:</Text>
+                  <ScrollView horizontal>
+                    {products.find(p => p.id === item.id).colors.map(color => (
+                      <TouchableOpacity
+                        key={color}
+                        onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'color', color)}
+                        style={[styles.colorBtn, item.color === color && styles.colorActive]}
+                      >
+                        <Text style={[styles.optionText, item.color === color && styles.optionTextActive]}>{color}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+                <View style={styles.qtyRow}>
+                  <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, -1)} disabled={item.quantity === 1} style={styles.qtyBtn}>
+                    <Text style={styles.qtyTextBtn}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.qtyCount}>{item.quantity}</Text>
+                  <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, 1)} disabled={item.quantity === item.stock} style={styles.qtyBtn}>
+                    <Text style={styles.qtyTextBtn}>+</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.cartPrice}>{(item.price * item.quantity).toLocaleString()} VNĐ</Text>
               </View>
-            );
-          })
+              <TouchableOpacity onPress={() => handleRemoveFromCart(item.id, item.size, item.color)} style={styles.deleteBtn}>
+                <Text style={styles.deleteText}>Xóa</Text>
+              </TouchableOpacity>
+            </View>
+          ))
         )}
         {cart.length > 0 && (
-          <View style={styles.cartTotalRow}>
-            <Text style={styles.cartTotalLabel}>Tổng cộng:</Text>
-            <Text style={styles.cartTotal}>{total.toLocaleString()} VNĐ</Text>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Tổng cộng:</Text>
+            <Text style={styles.totalValue}>{total.toLocaleString()} VNĐ</Text>
           </View>
         )}
       </View>
@@ -238,60 +223,42 @@ export default function Product() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fbc2eb' },
-  title: {
-    fontSize: 32, fontWeight: 'bold', color: '#3a2066',
-    marginTop: 32, marginBottom: 16, textAlign: 'center'
-  },
-  search: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 16,
-    fontSize: 18, marginHorizontal: 24, marginBottom: 16
-  },
-  productCard: {
-    backgroundColor: '#fff', borderRadius: 24, padding: 18,
-    marginHorizontal: 12, alignItems: 'center', width: 220,
-    shadowColor: '#9575cd', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4
-  },
-  productImage: { width: 120, height: 120, borderRadius: 18, marginBottom: 10 },
-  productName: { fontWeight: 'bold', fontSize: 20, color: '#512da8', marginBottom: 2 },
-  productCategory: { color: '#7b1fa2', fontSize: 14, marginBottom: 2 },
-  productPrice: { color: '#222', fontSize: 18, fontWeight: 'bold', marginBottom: 2 },
-  productStock: { fontSize: 14, fontWeight: 'bold', marginBottom: 2 },
-  notFound: { color: '#b39ddb', fontStyle: 'italic', fontSize: 18, marginTop: 30, textAlign: 'center' },
-  cartTitle: {
-    fontSize: 26, color: '#7b1fa2', fontWeight: 'bold',
-    marginTop: 32, marginBottom: 10, textAlign: 'center'
-  },
-  cartBox: {
-    backgroundColor: '#fff', borderRadius: 18, margin: 16, padding: 16,
-    shadowColor: '#9575cd', shadowOpacity: 0.12, shadowRadius: 8, elevation: 2
-  },
-  cartEmpty: { color: '#b39ddb', fontStyle: 'italic', fontSize: 16, textAlign: 'center' },
-  cartItem: {
-    flexDirection: 'row', alignItems: 'center', marginBottom: 18,
-    borderBottomWidth: 1, borderBottomColor: '#e1bee7', paddingBottom: 10
-  },
-  cartImage: { width: 60, height: 60, borderRadius: 12 },
-  cartName: { fontWeight: 'bold', fontSize: 16, color: '#512da8' },
-  cartCategory: { color: '#7b1fa2', fontSize: 13 },
-  cartLabel: { fontWeight: 'bold', marginRight: 8, fontSize: 13 },
-  row: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  optionBtn: {
-    borderWidth: 1, borderColor: '#ce93d8', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 4, marginRight: 6, backgroundColor: '#fafafa'
-  },
-  optionBtnActive: { backgroundColor: '#7b1fa2', borderColor: '#7b1fa2' },
-  qtyBtn: {
-    backgroundColor: '#a1c4fd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 2, marginHorizontal: 4
-  },
-  qtyBtnText: { fontSize: 18, fontWeight: 'bold', color: '#222' },
-  qtyText: { fontWeight: 'bold', fontSize: 16, marginHorizontal: 6 },
-  cartPrice: { color: '#388e3c', fontWeight: 'bold', marginTop: 6 },
-  deleteBtn: {
-    backgroundColor: '#f857a6', borderRadius: 10, padding: 8, marginLeft: 8,
-    alignSelf: 'flex-start'
-  },
-  cartTotalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
-  cartTotalLabel: { fontWeight: 'bold', fontSize: 18, color: '#7b1fa2' },
-  cartTotal: { fontWeight: 'bold', fontSize: 18, color: '#388e3c' }
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  content: { paddingBottom: 40 },
+  title: { fontSize: 32, fontWeight: '700', textAlign: 'center', color: '#0288D1', marginTop: 24 },
+  search: { backgroundColor: '#F1F8FF', margin: 16, borderRadius: 30, paddingHorizontal: 20, paddingVertical: 12, fontSize: 16, shadowColor: '#0288D1', shadowOpacity: 0.1, shadowRadius: 6, elevation: 2 },
+  listContainer: { paddingLeft: 16 },
+  card: { backgroundColor: '#E3F2FD', borderRadius: 20, margin: 8, marginLeft: 16, marginRight: 16, width: 200, overflow: 'hidden', shadowColor: '#0288D1', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  image: { width: '100%', height: 200 },
+  info: { padding: 12 },
+  name: { fontSize: 18, fontWeight: '600', color: '#0277BD' },
+  category: { fontSize: 14, color: '#039BE5', marginVertical: 4 },
+  price: { fontSize: 16, fontWeight: '700', color: '#01579B' },
+  empty: { textAlign: 'center', color: '#81D4FA', marginTop: 24 },
+
+  cartTitle: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: '#0288D1', marginVertical: 24 },
+  cartBox: { marginHorizontal: 16, backgroundColor: '#F1FAFF', borderRadius: 20, padding: 16, shadowColor: '#0288D1', shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 },
+  emptyCart: { textAlign: 'center', color: '#90CAF9', fontSize: 16, paddingVertical: 32 },
+  cartItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
+  cartImage: { width: 60, height: 60, borderRadius: 12, marginTop: 4 },
+  cartInfo: { flex: 1, marginLeft: 12 },
+  cartName: { fontSize: 16, fontWeight: '600', color: '#01579B' },
+  cartLabel: { fontSize: 14, fontWeight: '600', color: '#0277BD', marginRight: 8 },
+  optionRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
+  optionBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#E1F5FE', borderRadius: 10, marginRight: 8, borderWidth: 1, borderColor: '#81D4FA' },
+  optionActive: { backgroundColor: '#0288D1', borderColor: '#0288D1' },
+  optionText: { fontSize: 14, color: '#01579B' },
+  optionTextActive: { color: '#FFFFFF' },
+  colorBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#E1F5FE', borderRadius: 10, marginRight: 8, borderWidth: 1, borderColor: '#81D4FA' },
+  colorActive: { backgroundColor: '#0288D1', borderColor: '#0288D1' },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
+  qtyBtn: { paddingHorizontal: 10, paddingVertical: 4, backgroundColor: '#81D4FA', borderRadius: 8 },
+  qtyTextBtn: { fontSize: 16, fontWeight: '700', color: '#01579B' },
+  qtyCount: { fontSize: 16, fontWeight: '700', color: '#01579B', marginHorizontal: 12 },
+  cartPrice: { fontSize: 14, color: '#0277BD', marginTop: 4 },
+  deleteBtn: { marginLeft: 12, alignSelf: 'center', backgroundColor: '#FF5252', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  deleteText: { color: '#FFFFFF', fontWeight: '700' },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, borderTopWidth: 1, borderTopColor: '#B3E5FC', paddingTop: 12 },
+  totalLabel: { fontSize: 18, fontWeight: '700', color: '#01579B' },
+  totalValue: { fontSize: 18, fontWeight: '700', color: '#0288D1' },
 });
