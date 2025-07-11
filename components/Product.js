@@ -1,49 +1,68 @@
 import { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, Image, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ProductDetail from '../components/ProductDetail';
 
 const demoProducts = [
   {
-    id: 1,
-    name: 'T-Shirt Basic',
-    price: 150000,
-    category: 'Áo thun',
-    image: require('../assets/img/tshirt-basic.png'),
-    description: 'Cotton 100%, thoáng mát, thiết kế tối giản.',
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Trắng', 'Đen', 'Xanh']
-  },
-  {
-    id: 2,
-    name: 'T-Shirt Premium',
-    price: 250000,
-    category: 'Áo thun',
-    image: require('../assets/img/tshirt-premium.png'),
-    description: 'Chất liệu cao cấp, co giãn tốt, bền đẹp.',
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Trắng', 'Đen']
-  },
-  {
-    id: 3,
-    name: 'Hoodie',
-    price: 350000,
-    category: 'Áo khoác',
-    image: require('../assets/img/hoodie.png'),
-    description: 'Dày dặn, giữ ấm, phong cách streetwear.',
-    sizes: ['M', 'L', 'XL'],
-    colors: ['Đen', 'Xám']
-  },
-  {
-    id: 4,
-    name: 'Sweater',
-    price: 320000,
-    category: 'Áo khoác',
-    image: require('../assets/img/sweater.png'),
-    description: 'Chất liệu len cao cấp, mềm mại, giữ nhiệt tốt trong thời tiết lạnh.',
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Xám', 'Xanh navy', 'Nâu']
-  }
+    id: 1,
+    name: 'T-Shirt Basic',
+    price: 150000,
+    category: 'Áo thun',
+    image: require('../assets/img/tshirt-basic.png'),
+    description: 'Cotton 100%, thoáng mát, thiết kế tối giản.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Trắng', 'Đen', 'Xanh']
+  },
+  {
+    id: 2,
+    name: 'T-Shirt Premium',
+    price: 250000,
+    category: 'Áo thun',
+    image: require('../assets/img/tshirt-premium.png'),
+    description: 'Chất liệu cao cấp, co giãn tốt, bền đẹp.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Trắng', 'Đen']
+  },
+  {
+    id: 3,
+    name: 'Hoodie',
+    price: 350000,
+    category: 'Áo khoác',
+    image: require('../assets/img/hoodie.png'),
+    description: 'Dày dặn, giữ ấm, phong cách streetwear.',
+    sizes: ['M', 'L', 'XL'],
+    colors: ['Đen', 'Xám']
+  },
+  {
+    id: 4,
+    name: 'Sweater',
+    price: 320000,
+    category: 'Áo khoác',
+    image: require('../assets/img/sweater.png'),
+    description: 'Chất liệu len cao cấp, mềm mại, giữ nhiệt tốt trong thời tiết lạnh.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Xám', 'Xanh navy', 'Nâu']
+  }
 ];
+
+const MD3_PALETTE = {
+  primary: '#4A5FAE',
+  onPrimary: '#FFFFFF',
+  primaryContainer: '#DDE0FF',
+  onPrimaryContainer: '#001945',
+  secondary: '#595E72',
+  secondaryContainer: '#DEE2F9',
+  onSecondaryContainer: '#161B2C',
+  error: '#BA1A1A',
+  background: '#FEFBFF',
+  onBackground: '#1B1B1F',
+  surface: '#FEFBFF',
+  onSurface: '#1B1B1F',
+  surfaceVariant: '#E3E2EC',
+  onSurfaceVariant: '#46464F',
+  outline: '#767680',
+};
 
 export default function Product() {
   const [products] = useState(demoProducts);
@@ -59,18 +78,15 @@ export default function Product() {
   const handleAddOrUpdateCart = (product, quantity = 1) => {
     const size = product.size || product.sizes[0];
     const color = product.color || product.colors[0];
-
     setCart(prev => {
       const index = prev.findIndex(item =>
         item.id === product.id && item.size === size && item.color === color
       );
-
       if (index !== -1) {
         const updated = [...prev];
         updated[index].quantity = quantity;
         return updated;
       }
-
       return [...prev, { ...product, size, color, quantity }];
     });
   };
@@ -87,8 +103,8 @@ export default function Product() {
 
   const handleRemoveFromCart = (id, size, color) => {
     Alert.alert(
-      'Xác nhận',
-      'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng không?',
+      'Xác nhận xóa',
+      'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
       [
         { text: 'Hủy', style: 'cancel' },
         {
@@ -105,6 +121,14 @@ export default function Product() {
 
   const handleUpdateCartOption = (id, oldSize, oldColor, type, value) => {
     setCart(prev => {
+      const existingItemIndex = prev.findIndex(item =>
+          item.id === id &&
+          (type === 'size' ? item.size === value && item.color === oldColor : item.size === oldSize && item.color === value)
+      );
+      if (existingItemIndex !== -1) {
+        Alert.alert("Lỗi", "Sản phẩm với lựa chọn này đã có trong giỏ hàng.");
+        return prev;
+      }
       const idx = prev.findIndex(item =>
         item.id === id && item.size === oldSize && item.color === oldColor
       );
@@ -123,99 +147,105 @@ export default function Product() {
         product={selectedProduct}
         onBack={() => setSelectedProduct(null)}
         cart={cart}
-        setCart={setCart}
         onAddOrUpdateCart={handleAddOrUpdateCart}
       />
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>🛍️ Sản phẩm nổi bật</Text>
-      <TextInput
-        style={styles.search}
-        placeholder="Tìm kiếm sản phẩm..."
-        placeholderTextColor="#7A7A7A"
-        value={search}
-        onChangeText={setSearch}
-      />
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Sản phẩm</Text>
+      </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={item => item.id.toString()}
-        horizontal
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => setSelectedProduct(item)}>
-            <Image source={item.image} style={styles.image} />
-            <View style={styles.info}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.category}>{item.category}</Text>
-              <Text style={styles.price}>{item.price.toLocaleString()} VNĐ</Text>
+      <View style={styles.searchContainer}>
+        <MaterialCommunityIcons name="magnify" size={22} color={MD3_PALETTE.onSurfaceVariant} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Tìm kiếm theo tên, danh mục..."
+          placeholderTextColor={MD3_PALETTE.onSurfaceVariant}
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
+
+      <View style={styles.productList}>
+        {filtered.map(item => (
+          <TouchableOpacity key={item.id} style={styles.productCard} onPress={() => setSelectedProduct(item)}>
+            <Image source={item.image} style={styles.productImage} />
+            <View style={styles.productInfo}>
+              <Text style={styles.productCategory}>{item.category}</Text>
+              <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+              <Text style={styles.productPrice}>{item.price.toLocaleString()} VNĐ</Text>
             </View>
           </TouchableOpacity>
-        )}
-      />
+        ))}
+      </View>
 
-      <Text style={styles.cartTitle}>🛒 Giỏ hàng của bạn</Text>
-      <View style={styles.cartBox}>
+      <View style={styles.divider} />
+
+      <View style={styles.cartSection}>
+        <Text style={styles.cartTitle}>Giỏ hàng của bạn</Text>
         {cart.length === 0 ? (
-          <Text style={styles.emptyCart}>Chưa có sản phẩm nào trong giỏ.</Text>
-        ) : (
-          cart.map(item => (
-            <View key={`${item.id}-${item.size}-${item.color}`} style={styles.cartItem}>
-              <Image source={item.image} style={styles.cartImage} />
-              <View style={styles.cartInfo}>
-                <Text style={styles.cartName}>{item.name}</Text>
-                <View style={styles.optionRow}>
-                  <Text style={styles.cartLabel}>Size:</Text>
-                  <ScrollView horizontal>
-                    {products.find(p => p.id === item.id).sizes.map(size => (
-                      <TouchableOpacity
-                        key={size}
-                        onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'size', size)}
-                        style={[styles.optionBtn, item.size === size && styles.optionActive]}
-                      >
-                        <Text style={[styles.optionText, item.size === size && styles.optionTextActive]}>{size}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-                <View style={styles.optionRow}>
-                  <Text style={styles.cartLabel}>Màu:</Text>
-                  <ScrollView horizontal>
-                    {products.find(p => p.id === item.id).colors.map(color => (
-                      <TouchableOpacity
-                        key={color}
-                        onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'color', color)}
-                        style={[styles.colorBtn, item.color === color && styles.colorActive]}
-                      >
-                        <Text style={[styles.optionText, item.color === color && styles.optionTextActive]}>{color}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-                <View style={styles.qtyRow}>
-                  <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, -1)} disabled={item.quantity === 1} style={styles.qtyBtn}>
-                    <Text style={styles.qtyTextBtn}>-</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.qtyCount}>{item.quantity}</Text>
-                  <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, 1)} disabled={item.quantity === item.stock} style={styles.qtyBtn}>
-                    <Text style={styles.qtyTextBtn}>+</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.cartPrice}>{(item.price * item.quantity).toLocaleString()} VNĐ</Text>
-              </View>
-              <TouchableOpacity onPress={() => handleRemoveFromCart(item.id, item.size, item.color)} style={styles.deleteBtn}>
-                <Text style={styles.deleteText}>Xóa</Text>
-              </TouchableOpacity>
-            </View>
-          ))
-        )}
-        {cart.length > 0 && (
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tổng cộng:</Text>
-            <Text style={styles.totalValue}>{total.toLocaleString()} VNĐ</Text>
+          <View style={styles.emptyCartContainer}>
+            <MaterialCommunityIcons name="cart-outline" size={48} color={MD3_PALETTE.outline} />
+            <Text style={styles.emptyCartText}>Giỏ hàng đang trống</Text>
           </View>
+        ) : (
+          <>
+            {cart.map(item => (
+              <View key={`${item.id}-${item.size}-${item.color}`} style={styles.cartItem}>
+                <Image source={item.image} style={styles.cartItemImage} />
+                <View style={styles.cartItemDetails}>
+                  <Text style={styles.cartItemName}>{item.name}</Text>
+                  <Text style={styles.cartItemPrice}>{(item.price * item.quantity).toLocaleString()} VNĐ</Text>
+                  
+                  <View style={styles.optionsContainer}>
+                    {products.find(p => p.id === item.id).sizes.map(size => (
+                       <TouchableOpacity
+                          key={size}
+                          onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'size', size)}
+                          style={[styles.chip, item.size === size && styles.chipActive]}
+                        >
+                          <Text style={[styles.chipText, item.size === size && styles.chipTextActive]}>{size}</Text>
+                        </TouchableOpacity>
+                    ))}
+                  </View>
+                  
+                   <View style={styles.optionsContainer}>
+                    {products.find(p => p.id === item.id).colors.map(color => (
+                        <TouchableOpacity
+                          key={color}
+                          onPress={() => handleUpdateCartOption(item.id, item.size, item.color, 'color', color)}
+                          style={[styles.chip, item.color === color && styles.chipActive]}
+                        >
+                          <Text style={[styles.chipText, item.color === color && styles.chipTextActive]}>{color}</Text>
+                        </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <View style={styles.cartItemActions}>
+                     <View style={styles.quantityControl}>
+                       <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, -1)} disabled={item.quantity <= 1}>
+                         <MaterialCommunityIcons name="minus" size={20} color={MD3_PALETTE.primary}/>
+                       </TouchableOpacity>
+                       <Text style={styles.quantityText}>{item.quantity}</Text>
+                       <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, 1)}>
+                         <MaterialCommunityIcons name="plus" size={20} color={MD3_PALETTE.primary}/>
+                       </TouchableOpacity>
+                     </View>
+                     <TouchableOpacity onPress={() => handleRemoveFromCart(item.id, item.size, item.color)} style={styles.deleteButton}>
+                        <MaterialCommunityIcons name="delete-outline" size={24} color={MD3_PALETTE.error} />
+                     </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ))}
+             <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Tổng cộng</Text>
+              <Text style={styles.totalValue}>{total.toLocaleString()} VNĐ</Text>
+            </View>
+          </>
         )}
       </View>
     </ScrollView>
@@ -223,42 +253,61 @@ export default function Product() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  content: { paddingBottom: 40 },
-  title: { fontSize: 32, fontWeight: '700', textAlign: 'center', color: '#0288D1', marginTop: 24 },
-  search: { backgroundColor: '#F1F8FF', margin: 16, borderRadius: 30, paddingHorizontal: 20, paddingVertical: 12, fontSize: 16, shadowColor: '#0288D1', shadowOpacity: 0.1, shadowRadius: 6, elevation: 2 },
-  listContainer: { paddingLeft: 16 },
-  card: { backgroundColor: '#E3F2FD', borderRadius: 20, margin: 8, marginLeft: 16, marginRight: 16, width: 200, overflow: 'hidden', shadowColor: '#0288D1', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
-  image: { width: '100%', height: 200 },
-  info: { padding: 12 },
-  name: { fontSize: 18, fontWeight: '600', color: '#0277BD' },
-  category: { fontSize: 14, color: '#039BE5', marginVertical: 4 },
-  price: { fontSize: 16, fontWeight: '700', color: '#01579B' },
-  empty: { textAlign: 'center', color: '#81D4FA', marginTop: 24 },
+  container: { flex: 1, backgroundColor: MD3_PALETTE.background },
+  contentContainer: { paddingBottom: 32 },
+  header: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 },
+  title: { fontSize: 32, fontWeight: 'bold', color: MD3_PALETTE.onBackground },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: MD3_PALETTE.surfaceVariant, borderRadius: 28, marginHorizontal: 16, paddingHorizontal: 16, marginVertical: 8 },
+  searchIcon: { marginRight: 12 },
+  searchInput: { flex: 1, height: 56, fontSize: 16, color: MD3_PALETTE.onSurfaceVariant },
+  
+  productList: { paddingHorizontal: 16, marginTop: 16 },
+  productCard: { 
+    flexDirection: 'row', 
+    backgroundColor: MD3_PALETTE.surface, 
+    borderRadius: 12, 
+    marginBottom: 16, 
+    elevation: 1, 
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: MD3_PALETTE.outline, 
+  },
+  productImage: { width: 100, height: 100, resizeMode: 'cover' },
+  productInfo: { flex: 1, padding: 12, justifyContent: 'center' },
+  productCategory: { fontSize: 12, color: MD3_PALETTE.secondary, textTransform: 'uppercase' },
+  productName: { fontSize: 16, fontWeight: '600', color: MD3_PALETTE.onSurface, marginVertical: 2 },
+  productPrice: { fontSize: 16, fontWeight: 'bold', color: MD3_PALETTE.primary, marginTop: 4 },
+  
+  divider: { height: 8, backgroundColor: MD3_PALETTE.surfaceVariant, marginVertical: 24 },
+  
+  cartSection: { paddingHorizontal: 16 },
+  cartTitle: { fontSize: 32, fontWeight: 'bold', color: MD3_PALETTE.onBackground, marginBottom: 16 },
+  emptyCartContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48 },
+  emptyCartText: { marginTop: 16, fontSize: 16, color: MD3_PALETTE.onSurfaceVariant },
+  
+  cartItem: { flexDirection: 'row', backgroundColor: MD3_PALETTE.surface, borderRadius: 12, marginBottom: 12, padding: 12, elevation: 1 },
+  cartItemImage: { width: 72, height: 72, borderRadius: 8, marginRight: 12, backgroundColor: MD3_PALETTE.surfaceVariant },
+  cartItemDetails: { flex: 1 },
+  cartItemName: { fontSize: 16, fontWeight: '600', color: MD3_PALETTE.onSurface },
+  cartItemPrice: { fontSize: 14, fontWeight: 'bold', color: MD3_PALETTE.primary, marginVertical: 4 },
+  
+  optionsContainer: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    alignItems: 'center', 
+    marginTop: 8 
+  },
+  chip: { paddingVertical: 6, paddingHorizontal: 12, backgroundColor: MD3_PALETTE.secondaryContainer, borderRadius: 8, marginRight: 8, marginBottom: 8 },
+  chipActive: { backgroundColor: MD3_PALETTE.primary },
+  chipText: { color: MD3_PALETTE.onSecondaryContainer, fontWeight: '500' },
+  chipTextActive: { color: MD3_PALETTE.onPrimary, fontWeight: 'bold' },
+  
+  cartItemActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
+  quantityControl: { flexDirection: 'row', alignItems: 'center', backgroundColor: MD3_PALETTE.primaryContainer, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 },
+  quantityText: { fontSize: 16, fontWeight: 'bold', color: MD3_PALETTE.onPrimaryContainer, marginHorizontal: 16 },
+  deleteButton: {},
 
-  cartTitle: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: '#0288D1', marginVertical: 24 },
-  cartBox: { marginHorizontal: 16, backgroundColor: '#F1FAFF', borderRadius: 20, padding: 16, shadowColor: '#0288D1', shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 },
-  emptyCart: { textAlign: 'center', color: '#90CAF9', fontSize: 16, paddingVertical: 32 },
-  cartItem: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
-  cartImage: { width: 60, height: 60, borderRadius: 12, marginTop: 4 },
-  cartInfo: { flex: 1, marginLeft: 12 },
-  cartName: { fontSize: 16, fontWeight: '600', color: '#01579B' },
-  cartLabel: { fontSize: 14, fontWeight: '600', color: '#0277BD', marginRight: 8 },
-  optionRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
-  optionBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#E1F5FE', borderRadius: 10, marginRight: 8, borderWidth: 1, borderColor: '#81D4FA' },
-  optionActive: { backgroundColor: '#0288D1', borderColor: '#0288D1' },
-  optionText: { fontSize: 14, color: '#01579B' },
-  optionTextActive: { color: '#FFFFFF' },
-  colorBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#E1F5FE', borderRadius: 10, marginRight: 8, borderWidth: 1, borderColor: '#81D4FA' },
-  colorActive: { backgroundColor: '#0288D1', borderColor: '#0288D1' },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
-  qtyBtn: { paddingHorizontal: 10, paddingVertical: 4, backgroundColor: '#81D4FA', borderRadius: 8 },
-  qtyTextBtn: { fontSize: 16, fontWeight: '700', color: '#01579B' },
-  qtyCount: { fontSize: 16, fontWeight: '700', color: '#01579B', marginHorizontal: 12 },
-  cartPrice: { fontSize: 14, color: '#0277BD', marginTop: 4 },
-  deleteBtn: { marginLeft: 12, alignSelf: 'center', backgroundColor: '#FF5252', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  deleteText: { color: '#FFFFFF', fontWeight: '700' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, borderTopWidth: 1, borderTopColor: '#B3E5FC', paddingTop: 12 },
-  totalLabel: { fontSize: 18, fontWeight: '700', color: '#01579B' },
-  totalValue: { fontSize: 18, fontWeight: '700', color: '#0288D1' },
+  totalContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: MD3_PALETTE.outline, marginTop: 16, paddingTop: 16 },
+  totalLabel: { fontSize: 18, fontWeight: '500', color: MD3_PALETTE.onSurfaceVariant },
+  totalValue: { fontSize: 20, fontWeight: 'bold', color: MD3_PALETTE.onSurface },
 });
