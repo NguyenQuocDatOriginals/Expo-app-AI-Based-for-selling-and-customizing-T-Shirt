@@ -1,4 +1,4 @@
-import React, { useContext, useState, createContext } from 'react';
+import React, { useContext } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,32 +8,18 @@ import LoginScreen from './LoginScreen';
 import RegisterScreen from './RegisterScreen';
 import Product from './Product';
 import Profile from './Profile';
-
-// Simple Auth Context for demo
-const AuthContext = createContext();
-
-function AuthProvider({ children }) {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    return (
-        <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
-            {children}
-        </AuthContext.Provider>
-    );
-}
-
-function ProfileWrapper({ navigation }) {
-    const { isLoggedIn } = useContext(AuthContext);
-    React.useEffect(() => {
-        if (!isLoggedIn) {
-            navigation.replace('Auth');
-        }
-    }, [isLoggedIn]);
-    return isLoggedIn ? <Profile /> : null;
-}
+import EditProfile from './EditProfile';
+import Notifications from './Notifications';
+import PrivacySecurity from './PrivacySecurity';
+import MyOrders from './MyOrders';
+import PaymentMethods from './PaymentMethods';
+import { globalStyles } from '../styles/globalStyles';
+import { AuthContext, AuthProvider } from '../context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const AuthStack = createNativeStackNavigator();
+const ProfileStack = createNativeStackNavigator();
 
 function AuthStackScreen() {
     return (
@@ -44,12 +30,25 @@ function AuthStackScreen() {
     );
 }
 
+function ProfileStackScreen() {
+    return (
+        <ProfileStack.Navigator screenOptions={{ headerShown: true }}>
+            <ProfileStack.Screen name="ProfileMain" component={Profile} options={{ title: 'Profile' }} />
+            <ProfileStack.Screen name="EditProfile" component={EditProfile} options={{ title: 'Edit Profile' }} />
+            <ProfileStack.Screen name="Notifications" component={Notifications} options={{ title: 'Notifications' }} />
+            <ProfileStack.Screen name="PrivacySecurity" component={PrivacySecurity} options={{ title: 'Privacy & Security' }} />
+            <ProfileStack.Screen name="MyOrders" component={MyOrders} options={{ title: 'My Orders' }} />
+            <ProfileStack.Screen name="PaymentMethods" component={PaymentMethods} options={{ title: 'Payment Methods' }} />
+        </ProfileStack.Navigator>
+    );
+}
+
 function MainTab() {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
-                tabBarStyle: { backgroundColor: '#1a1446', borderTopWidth: 0, height: 70, borderRadius: 20, margin: 10 },
+                tabBarStyle: { backgroundColor: '#1a1446', borderTopWidth: 0, height: 70, borderRadius: 0, margin: 0 },
                 tabBarActiveTintColor: '#fff',
                 tabBarInactiveTintColor: '#aaa',
                 tabBarIcon: ({ color, size }) => {
@@ -58,28 +57,13 @@ function MainTab() {
                     if (route.name === 'ProfileTab') iconName = 'person-outline';
                     return <Ionicons name={iconName} size={28} color={color} />;
                 },
-                tabBarLabel: ({ focused, color }) => {
-                    let label;
-                    if (route.name === 'Product') label = 'Home';
-                    if (route.name === 'ProfileTab') label = 'Profile';
-                    return (
-                        <View style={{
-                            backgroundColor: focused ? '#2d246b' : 'transparent',
-                            borderRadius: 16,
-                            paddingHorizontal: 16,
-                            paddingVertical: 4,
-                            marginTop: -8,
-                        }}>
-                            <Text style={{ color, fontWeight: focused ? 'bold' : 'normal' }}>{label}</Text>
-                        </View>
-                    );
-                }
+                // Remove custom tabBarLabel for default alignment
             })}
         >
-            <Tab.Screen name="Product" component={Product} />
+            <Tab.Screen name="Product" component={Product} options={{ tabBarLabel: 'Home' }} />
             <Tab.Screen
                 name="ProfileTab"
-                component={ProfileWrapper}
+                component={ProfileStackScreen}
                 options={{ tabBarLabel: 'Profile' }}
             />
         </Tab.Navigator>
