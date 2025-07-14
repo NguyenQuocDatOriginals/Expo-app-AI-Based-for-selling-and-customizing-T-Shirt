@@ -21,7 +21,7 @@ const MD3_PALETTE = {
   outline: '#767680',
 };
 
-const API_BASE = 'https://6870e3e47ca4d06b34b88489.mockapi.io/api';
+const API_BASE = 'https://6870e3e47ca4d06b34b88489.mockapi.io/api/';
 
 export default function Product() {
   const [products, setProducts] = useState([]);
@@ -33,7 +33,7 @@ export default function Product() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${API_BASE}/products`);
+        const res = await fetch(`${API_BASE}/admin_products`);
         if (!res.ok) throw new Error('Không thể tải danh sách sản phẩm');
         const data = await res.json();
         setProducts(data);
