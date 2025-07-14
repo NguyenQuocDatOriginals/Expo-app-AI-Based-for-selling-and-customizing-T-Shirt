@@ -1,27 +1,26 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, Image, Alert, ActivityIndicator, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ProductDetail from './ProductDetail';
 
 const MD3_PALETTE = {
   primary: '#4A5FAE',
   onPrimary: '#FFFFFF',
-  primaryContainer: '#DDE0FF',
-  onPrimaryContainer: '#001945',
   secondary: '#595E72',
-  secondaryContainer: '#DEE2F9',
-  onSecondaryContainer: '#161B2C',
-  error: '#BA1A1A',
   background: '#FEFBFF',
-  onBackground: '#1B1B1F',
-  surface: '#FEFBFF',
-  onSurface: '#1B1B1F',
-  surfaceVariant: '#E3E2EC',
-  onSurfaceVariant: '#46464F',
-  outline: '#767680',
+  surface: '#FFFFFF',
+  outline: '#DDE0FF',
+  error: '#BA1A1A',
 };
 
 const API_BASE = 'https://6870e3e47ca4d06b34b88489.mockapi.io/api/';
+const { width } = Dimensions.get('window');
+const numColumns = 2;
+const PADDING = 16;
+const CARD_MARGIN = 8;
+const INFO_HEIGHT = 80;
+const cardWidth = (width - PADDING * 2 - CARD_MARGIN * (numColumns - 1)) / numColumns;
+const cardHeight = cardWidth + INFO_HEIGHT;
 
 export default function Product() {
   const [products, setProducts] = useState([]);
@@ -31,406 +30,234 @@ export default function Product() {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    async function fetchProducts() {
       try {
         const res = await fetch(`${API_BASE}/admin_products`);
-        if (!res.ok) throw new Error('Không thể tải danh sách sản phẩm');
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        console.error(err);
-        Alert.alert('Lỗi', 'Không tải được sản phẩm. Vui lòng thử lại.');
+        if (!res.ok) throw new Error();
+        setProducts(await res.json());
+      } catch {
+        Alert.alert('Lỗi', 'Không tải được sản phẩm.');
       } finally {
         setLoading(false);
       }
-    };
+    }
     fetchProducts();
   }, []);
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.category.toLowerCase().includes(search.toLowerCase())
+  const filtered = products.filter(
+    p => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAddOrUpdateCart = (product, quantity = 1) => {
-    const size = product.size || product.sizes[0];
-    const color = product.color || product.colors[0];
-    setCart(prev => {
-      const index = prev.findIndex(item =>
-        item.id === product.id && item.size === size && item.color === color
-      );
-      if (index !== -1) {
-        const updated = [...prev];
-        updated[index].quantity = quantity;
+  const handleAddOrUpdateCart = (prod, quantity = 1) => {
+    const size = prod.size || prod.sizes[0];
+    const color = prod.color || prod.colors[0];
+    setCart(curr => {
+      const i = curr.findIndex(c => c.id === prod.id && c.size === size && c.color === color);
+      if (i >= 0) {
+        const updated = [...curr];
+        updated[i].quantity = quantity;
         return updated;
       }
-      return [...prev, { ...product, size, color, quantity }];
+      return [...curr, { ...prod, size, color, quantity }];
     });
   };
 
   const handleChangeQuantity = (id, size, color, delta) => {
-    setCart(prev =>
-      prev.map(item =>
-        item.id === id && item.size === size && item.color === color
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
+    setCart(curr =>
+      curr.map(c =>
+        c.id === id && c.size === size && c.color === color
+          ? { ...c, quantity: Math.max(1, c.quantity + delta) }
+          : c
       )
     );
   };
 
-  const handleRemoveFromCart = (id, size, color) => {
-    Alert.alert(
-      'Xác nhận xóa',
-      'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa',
-          style: 'destructive',
-          onPress: () =>
-            setCart(prev =>
-              prev.filter(item => !(item.id === id && item.size === size && item.color === color))
-            )
-        }
-      ]
-    );
+  const handleRemove = (id, size, color) => {
+    setCart(curr => curr.filter(c => !(c.id === id && c.size === size && c.color === color)));
   };
 
-  const handleUpdateCartOption = (id, oldSize, oldColor, type, value) => {
-    setCart(prev => {
-      const exists = prev.find(item =>
-        item.id === id &&
-        (type === 'size'
-          ? item.size === value && item.color === oldColor
-          : item.size === oldSize && item.color === value)
-      );
-      if (exists) {
-        Alert.alert('Lỗi', 'Sản phẩm với lựa chọn này đã có trong giỏ hàng.');
-        return prev;
+  const handleUpdateOption = (id, oldSize, oldColor, type, value) => {
+    setCart(curr => {
+      if (
+        curr.some(
+          c => c.id === id &&
+          (type === 'size'
+            ? c.size === value && c.color === oldColor
+            : c.color === value && c.size === oldSize)
+        )
+      ) {
+        Alert.alert('Lỗi', 'Đã tồn tại sản phẩm với tùy chọn này');
+        return curr;
       }
-      const idx = prev.findIndex(item =>
-        item.id === id && item.size === oldSize && item.color === oldColor
+      return curr.map(c =>
+        c.id === id && c.size === oldSize && c.color === oldColor
+          ? { ...c, [type]: value }
+          : c
       );
-      if (idx === -1) return prev;
-      const updated = [...prev];
-      updated[idx][type] = value;
-      return updated;
     });
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce((s, c) => s + c.price * c.quantity, 0);
 
-  if (loading) {
-    return (
-      <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
-        <ActivityIndicator size="large" color={MD3_PALETTE.primary} />
+  const renderProduct = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.card, { width: cardWidth, height: cardHeight }]}
+      onPress={() => setSelectedProduct(item)}
+      activeOpacity={0.8}
+    >
+      <Image source={{ uri: item.image }} style={styles.cardImage} />
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardCategory}>{item.category}</Text>
+        <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.cardPrice}>{item.price.toLocaleString()} VNĐ</Text>
       </View>
-    );
-  }
+    </TouchableOpacity>
+  );
 
-  if (selectedProduct) {
-    return (
-      <ProductDetail
-        product={selectedProduct}
-        onBack={() => setSelectedProduct(null)}
-        cart={cart}
-        onAddOrUpdateCart={handleAddOrUpdateCart}
-      />
-    );
-  }
+  const renderCart = () => (
+    <View style={styles.cartContainer}>
+      <Text style={styles.cartHeader}>Giỏ hàng của bạn</Text>
+      {cart.length === 0 ? (
+        <View style={styles.cartEmpty}>
+          <MaterialCommunityIcons name="cart-outline" size={60} color="#bbb" />
+          <Text style={styles.cartEmptyText}>Không có sản phẩm</Text>
+        </View>
+      ) : (
+        cart.map((item, idx) => (
+          <View key={idx} style={styles.cartItemCard}>
+            <Image source={{ uri: item.image }} style={styles.cartItemImage} />
+            <View style={styles.cartItemInfo}>
+              <Text style={styles.cartItemName}>{item.name}</Text>
+              <Text style={styles.cartItemPrice}>{(item.price * item.quantity).toLocaleString()} VNĐ</Text>
+              <View style={styles.cartOptionsRow}>
+                <FlatList data={products.find(p => p.id === item.id).sizes} horizontal keyExtractor={s => s} showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.cartScroll}
+                  renderItem={({ item: s }) => (
+                    <TouchableOpacity onPress={() => handleUpdateOption(item.id, item.size, item.color, 'size', s)} style={[styles.chip, item.size === s && styles.chipActive]}>
+                      <Text style={[styles.chipText, item.size === s && styles.chipTextActive]}>{s}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+                <FlatList data={products.find(p => p.id === item.id).colors} horizontal keyExtractor={c => c} showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.cartScroll}
+                  renderItem={({ item: c }) => (
+                    <TouchableOpacity onPress={() => handleUpdateOption(item.id, item.size, item.color, 'color', c)} style={[styles.chip, item.color === c && styles.chipActive]}>
+                      <Text style={[styles.chipText, item.color === c && styles.chipTextActive]}>{c}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+              <View style={styles.cartActionsRow}>
+                <View style={styles.quantityBox}>
+                  <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, -1)}><Text style={styles.qtyBtn}>-</Text></TouchableOpacity>
+                  <Text style={styles.qtyText}>{item.quantity}</Text>
+                  <TouchableOpacity onPress={() => handleChangeQuantity(item.id, item.size, item.color, 1)}><Text style={styles.qtyBtn}>+</Text></TouchableOpacity>
+                </View>
+                <TouchableOpacity onPress={() => handleRemove(item.id, item.size, item.color)}><MaterialCommunityIcons name="trash-can-outline" size={24} color={MD3_PALETTE.error} /></TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        ))
+      )}
+      {cart.length > 0 && (
+        <View style={styles.cartTotalRow}>
+          <Text style={styles.cartTotalText}>Tổng cộng:</Text>
+          <Text style={styles.cartTotalAmount}>{total.toLocaleString()} VNĐ</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  if (loading) return <ActivityIndicator style={styles.loader} size="large" color={MD3_PALETTE.primary} />;
+  if (selectedProduct) return <ProductDetail product={selectedProduct} onBack={() => setSelectedProduct(null)} cart={cart} onAddOrUpdateCart={handleAddOrUpdateCart} />;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Sản phẩm</Text>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <MaterialCommunityIcons
-          name="magnify"
-          size={22}
-          color={MD3_PALETTE.onSurfaceVariant}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Tìm kiếm theo tên, danh mục..."
-          placeholderTextColor={MD3_PALETTE.onSurfaceVariant}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </View>
-
-      <View style={styles.productList}>
-        {filtered.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.productCard}
-            onPress={() => setSelectedProduct(item)}
-          >
-            <Image source={{ uri: item.image }} style={styles.productImage} />
-            <View style={styles.productInfo}>
-              <Text style={styles.productCategory}>{item.category}</Text>
-              <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-              <Text style={styles.productPrice}>{item.price.toLocaleString()} VNĐ</Text>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <FlatList
+        data={filtered}
+        keyExtractor={i => i.id}
+        numColumns={numColumns}
+        renderItem={renderProduct}
+        contentContainerStyle={styles.productsGrid}
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        ListHeaderComponent={
+          <View style={styles.headerSearch}>
+            <Text style={styles.headerTitle}>Sản phẩm</Text>
+            <View style={styles.searchBox}>
+              <MaterialCommunityIcons name="magnify" size={24} color="#888" />
+              <TextInput placeholder="Tìm kiếm danh mục, sản phẩm" style={styles.searchInput} value={search} onChangeText={setSearch} />
             </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.cartSection}>
-        <Text style={styles.cartTitle}>Giỏ hàng của bạn</Text>
-        {cart.length === 0 ? (
-          <View style={styles.emptyCartContainer}>
-            <MaterialCommunityIcons
-              name="cart-outline"
-              size={48}
-              color={MD3_PALETTE.outline}
-            />
-            <Text style={styles.emptyCartText}>Giỏ hàng đang trống</Text>
           </View>
-        ) : (
-          <>
-            {cart.map(item => (
-              <View
-                key={`${item.id}-${item.size}-${item.color}`}
-                style={styles.cartItem}
-              >
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.cartItemImage}
-                />
-                <View style={styles.cartItemDetails}>
-                  <Text style={styles.cartItemName}>{item.name}</Text>
-                  <Text style={styles.cartItemPrice}>
-                    {(item.price * item.quantity).toLocaleString()} VNĐ
-                  </Text>
-
-                  <View style={styles.optionsContainer}>
-                    {products.find(p => p.id === item.id).sizes.map(size => (
-                      <TouchableOpacity
-                        key={size}
-                        onPress={() =>
-                          handleUpdateCartOption(item.id, item.size, item.color, 'size', size)
-                        }
-                        style={[
-                          styles.chip,
-                          item.size === size && styles.chipActive
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.chipText,
-                            item.size === size && styles.chipTextActive
-                          ]}
-                        >
-                          {size}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <View style={styles.optionsContainer}>
-                    {products.find(p => p.id === item.id).colors.map(color => (
-                      <TouchableOpacity
-                        key={color}
-                        onPress={() =>
-                          handleUpdateCartOption(item.id, item.size, item.color, 'color', color)
-                        }
-                        style={[
-                          styles.chip,
-                          item.color === color && styles.chipActive
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.chipText,
-                            item.color === color && styles.chipTextActive
-                          ]}
-                        >
-                          {color}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  <View style={styles.cartItemActions}>
-                    <View style={styles.quantityControl}>
-                      <TouchableOpacity
-                        onPress={() =>
-                          handleChangeQuantity(item.id, item.size, item.color, -1)
-                        }
-                        disabled={item.quantity <= 1}
-                      >
-                        <MaterialCommunityIcons
-                          name="minus"
-                          size={20}
-                          color={MD3_PALETTE.primary}
-                        />
-                      </TouchableOpacity>
-                      <Text style={styles.quantityText}>{item.quantity}</Text>
-                      <TouchableOpacity
-                        onPress={() =>
-                          handleChangeQuantity(item.id, item.size, item.color, 1)
-                        }
-                      >
-                        <MaterialCommunityIcons
-                          name="plus"
-                          size={20}
-                          color={MD3_PALETTE.primary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() =>
-                        handleRemoveFromCart(item.id, item.size, item.color)
-                      }
-                      style={styles.deleteButton}
-                    >
-                      <MaterialCommunityIcons
-                        name="delete-outline"
-                        size={24}
-                        color={MD3_PALETTE.error}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            ))}
-            <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Tổng cộng</Text>
-              <Text style={styles.totalValue}>{total.toLocaleString()} VNĐ</Text>
-            </View>
-          </>
-        )}
-      </View>
-    </ScrollView>
+        }
+        ListFooterComponent={renderCart}
+        showsVerticalScrollIndicator={false}
+      />
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: MD3_PALETTE.background },
-  contentContainer: { paddingBottom: 32 },
-  header: { paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 },
-  title: { fontSize: 32, fontWeight: 'bold', color: MD3_PALETTE.onBackground },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: MD3_PALETTE.surfaceVariant,
-    borderRadius: 28,
-    marginHorizontal: 16,
-    paddingHorizontal: 16,
-    marginVertical: 8
-  },
-  searchIcon: { marginRight: 12 },
-  searchInput: {
-    flex: 1,
-    height: 56,
-    fontSize: 16,
-    color: MD3_PALETTE.onSurfaceVariant
-  },
-  productList: { paddingHorizontal: 16, marginTop: 16 },
-  productCard: {
-    flexDirection: 'row',
+  loader: { flex: 1, justifyContent: 'center' },
+  headerSearch: { padding: PADDING },
+  headerTitle: { marginTop: 50, fontSize: 28, fontWeight: 'bold', color: '#333' },
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eee', borderRadius: 20, marginTop: 8, paddingHorizontal: 12, height: 45 },
+  searchInput: { flex: 1, marginLeft: 8, fontSize: 16 },
+  productsGrid: { paddingHorizontal: PADDING, paddingBottom: PADDING },
+  card: {
     backgroundColor: MD3_PALETTE.surface,
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 1,
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: MD3_PALETTE.outline
+    marginBottom: CARD_MARGIN,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
-  productImage: { width: 100, height: 100, resizeMode: 'cover' },
-  productInfo: { flex: 1, padding: 12, justifyContent: 'center' },
-  productCategory: {
-    fontSize: 12,
-    color: MD3_PALETTE.secondary,
-    textTransform: 'uppercase'
+  cardImage: { width: '100%', height: cardWidth },
+  cardInfo: { padding: 8, height: INFO_HEIGHT, justifyContent: 'space-between' },
+  cardCategory: { fontSize: 12, color: MD3_PALETTE.secondary, textTransform: 'uppercase' },
+  cardName: { fontSize: 14, fontWeight: '600', color: '#333' },
+  cardPrice: { fontSize: 14, fontWeight: 'bold', color: MD3_PALETTE.primary },
+  cartContainer: {
+    backgroundColor: '#fafafa',
+    padding: PADDING,
+    marginTop: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: -3 },
+    elevation: 4,
   },
-  productName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: MD3_PALETTE.onSurface,
-    marginVertical: 2
-  },
-  productPrice: { fontSize: 16, fontWeight: 'bold', color: MD3_PALETTE.primary, marginTop: 4 },
-  divider: { height: 8, backgroundColor: MD3_PALETTE.surfaceVariant, marginVertical: 24 },
-  cartSection: { paddingHorizontal: 16 },
-  cartTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: MD3_PALETTE.onBackground,
-    marginBottom: 16
-  },
-  emptyCartContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48 },
-  emptyCartText: { marginTop: 16, fontSize: 16, color: MD3_PALETTE.onSurfaceVariant },
-  cartItem: {
+  cartHeader: { fontSize: 22, fontWeight: 'bold', marginBottom: 12, color: '#333' },
+  cartEmpty: { alignItems: 'center', paddingVertical: 20 },
+  cartEmptyText: { color: '#888', marginTop: 8, fontSize: 16 },
+  cartItemCard: {
     flexDirection: 'row',
     backgroundColor: MD3_PALETTE.surface,
     borderRadius: 12,
     marginBottom: 12,
-    padding: 12,
-    elevation: 1
+    overflow: 'hidden',
+    elevation: 1,
   },
-  cartItemImage: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
-    marginRight: 12,
-    backgroundColor: MD3_PALETTE.surfaceVariant
-  },
-  cartItemDetails: { flex: 1 },
-  cartItemName: { fontSize: 16, fontWeight: '600', color: MD3_PALETTE.onSurface },
+  cartItemImage: { width: 80, height: 80 },
+  cartItemInfo: { flex: 1, padding: 8, justifyContent: 'space-between' },
+  cartItemName: { fontSize: 14, fontWeight: '600', color: '#333' },
   cartItemPrice: { fontSize: 14, fontWeight: 'bold', color: MD3_PALETTE.primary, marginVertical: 4 },
-  optionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    marginTop: 8
-  },
-  chip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: MD3_PALETTE.secondaryContainer,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 8
-  },
+  cartOptionsRow: { marginVertical: 4 },
+  cartScroll: { marginVertical: 4 },
+  chip: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8, backgroundColor: '#eee', marginRight: 8 },
   chipActive: { backgroundColor: MD3_PALETTE.primary },
-  chipText: { color: MD3_PALETTE.onSecondaryContainer, fontWeight: '500' },
-  chipTextActive: { color: MD3_PALETTE.onPrimary, fontWeight: 'bold' },
-  cartItemActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12
-  },
-  quantityControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: MD3_PALETTE.primaryContainer,
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 4
-  },
-  quantityText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: MD3_PALETTE.onPrimaryContainer,
-    marginHorizontal: 16
-  },
-  deleteButton: {},
-  totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: MD3_PALETTE.outline,
-    marginTop: 16,
-    paddingTop: 16
-  },
-  totalLabel: { fontSize: 18, fontWeight: '500', color: MD3_PALETTE.onSurfaceVariant },
-  totalValue: { fontSize: 20, fontWeight: 'bold', color: MD3_PALETTE.onSurface }
+  chipText: { fontSize: 12, color: '#555' },
+  chipTextActive: { color: '#fff' },
+  cartActionsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
+  quantityBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eee', borderRadius: 20, paddingHorizontal: 8 },
+  qtyBtn: { fontSize: 18, color: MD3_PALETTE.primary, paddingHorizontal: 6 },
+  qtyText: { fontSize: 14, marginHorizontal: 4 },
+  deleteButton: { padding: 4 },
+  cartTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12, borderTopWidth: 1, borderColor: '#ddd', marginTop: 8 },
+  cartTotalText: { fontSize: 16, color: '#555' },
+  cartTotalAmount: { fontSize: 18, fontWeight: 'bold', color: '#333' },
 });
