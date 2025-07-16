@@ -1,81 +1,104 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useState, useContext } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles } from '../styles/globalStyles';
 import { AuthContext } from '../context/AuthContext';
 
 export default function RegisterScreen({ navigation }) {
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { setIsLoggedIn } = useContext(AuthContext);
 
-    const handleRegister = () => {
-        setIsLoggedIn(true);
-        navigation.replace('Main');
+    const handleRegister = async () => {
+        try {
+            const res = await fetch('https://687321edc75558e273536526.mockapi.io/api/admin_users');
+            const users = await res.json();
+            const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
+
+            if (exists) {
+                Alert.alert('Thông báo', 'Email đã tồn tại!');
+                return;
+            }
+
+            await fetch('https://687321edc75558e273536526.mockapi.io/api/admin_users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username,
+                    email,
+                    password,
+                    role: 'user',
+                    status: 'active',
+                }),
+            });
+
+            setIsLoggedIn(true);
+            navigation.replace('Main');
+        } catch (err) {
+            Alert.alert('Lỗi', 'Không thể đăng ký. Vui lòng thử lại sau.');
+        }
     };
 
-    const handleBackToHome = () => {
-        navigation.replace('Main');
-    };
+    const handleBackToHome = () => navigation.replace('Main');
 
     return (
         <View style={styles.flex}>
-            <LinearGradient
-                colors={['#1a237e', '#000']}
-                style={styles.background}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-            />
+            <LinearGradient colors={['#1a237e', '#000']} style={styles.background} />
             <View style={styles.overlay} />
 
-            {/* Back to Homepage Button */}
             <TouchableOpacity style={styles.backButton} onPress={handleBackToHome}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
-                <Text style={[styles.backButtonText, globalStyles.text]}>Back to Homepage</Text>
+                <Text style={[styles.backButtonText, globalStyles.text]}>Trở về trang chủ</Text>
             </TouchableOpacity>
 
             <View style={styles.container}>
-                <Text style={[styles.title, globalStyles.heading]}>SIGN UP</Text>
-                <Text style={[styles.subtitle, globalStyles.caption]}>Create your account</Text>
+                <Text style={[styles.title, globalStyles.heading]}>ĐĂNG KÝ</Text>
+                <Text style={[styles.subtitle, globalStyles.caption]}>Tạo tài khoản của bạn</Text>
+
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={[styles.input, globalStyles.input]}
+                        placeholder="Tên người dùng"
+                        placeholderTextColor="#bdbdbd"
+                        value={username}
+                        onChangeText={setUsername}
+                    />
+                </View>
+
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={[styles.input, globalStyles.input]}
                         placeholder="Email"
                         placeholderTextColor="#bdbdbd"
+                        autoCapitalize="none"
+                        keyboardType="email-address"
                         value={email}
                         onChangeText={setEmail}
                     />
                 </View>
+
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={[styles.input, globalStyles.input]}
-                        placeholder="Password"
+                        placeholder="Mật khẩu"
                         placeholderTextColor="#bdbdbd"
                         secureTextEntry
                         value={password}
                         onChangeText={setPassword}
                     />
                 </View>
+
                 <TouchableOpacity style={styles.button} onPress={handleRegister}>
-                    <Text style={[styles.buttonText, globalStyles.buttonText]}>Sign up</Text>
+                    <Text style={[styles.buttonText, globalStyles.buttonText]}>Đăng ký</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                    <Text style={[styles.link, globalStyles.text]}>Already have an account? Sign in</Text>
+                    <Text style={[styles.link, globalStyles.text]}>
+                        Đã có tài khoản? Đăng nhập
+                    </Text>
                 </TouchableOpacity>
-                <View style={styles.divider} />
-                <Text style={[styles.orText, globalStyles.text]}>Or continue with</Text>
-                <View style={styles.socialContainer}>
-                    <TouchableOpacity style={styles.socialButton}>
-                        <Text style={[styles.socialText, globalStyles.buttonText]}>Google</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.socialButton}>
-                        <Text style={[styles.socialText, globalStyles.buttonText]}>Facebook</Text>
-                    </TouchableOpacity>
-                </View>
-                <Text style={[styles.terms, globalStyles.caption]}>
-                    By registering you with our <Text style={styles.link}>Terms and Conditions</Text>
-                </Text>
             </View>
         </View>
     );
@@ -105,16 +128,28 @@ const styles = StyleSheet.create({
     container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     title: { color: '#fff', fontSize: 36, marginBottom: 8, marginTop: 40 },
     subtitle: { color: '#fff', fontSize: 14, marginBottom: 24 },
-    inputContainer: { width: '80%', backgroundColor: '#2d225a', borderRadius: 10, marginBottom: 16, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
+    inputContainer: {
+        width: '80%',
+        backgroundColor: '#2d225a',
+        borderRadius: 10,
+        marginBottom: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+    },
     input: { flex: 1, color: '#fff', height: 48 },
-    button: { width: '80%', backgroundColor: '#38b6ff', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
+    button: {
+        width: '80%',
+        backgroundColor: '#38b6ff',
+        borderRadius: 10,
+        paddingVertical: 14,
+        alignItems: 'center',
+        marginBottom: 16,
+    },
     buttonText: { color: '#fff', fontSize: 18 },
-    divider: { width: '80%', height: 1, backgroundColor: '#3a2e6c', marginVertical: 16 },
-    orText: { color: '#fff', marginBottom: 12 },
-    socialContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '80%', marginBottom: 16 },
-    socialButton: { flex: 1, backgroundColor: '#2d225a', borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginHorizontal: 4 },
-    socialText: { color: '#fff' },
-    terms: { color: '#fff', fontSize: 12, marginTop: 8, textAlign: 'center' },
-    link: { textDecorationLine: 'underline', color: '#38b6ff', marginTop: 8 },
-    copyright: { color: '#bdbdbd', fontSize: 10, position: 'absolute', bottom: 12, alignSelf: 'center' },
-}); 
+    link: {
+        textDecorationLine: 'underline',
+        color: '#38b6ff',
+        marginTop: 8,
+    },
+});
