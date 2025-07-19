@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, Image, A
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ProductDetail from './ProductDetail';
 import Cart from './Cart';
+import { API_BASE_URL } from '@env';
 
 const MD3_PALETTE = {
   primary: '#4A5FAE',
@@ -14,7 +15,6 @@ const MD3_PALETTE = {
   error: '#BA1A1A',
 };
 
-const API_BASE = 'https://6870e3e47ca4d06b34b88489.mockapi.io/api/';
 const { width } = Dimensions.get('window');
 const numColumns = 2;
 const PADDING = 16;
@@ -33,11 +33,21 @@ export default function Product() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch(`${API_BASE}/admin_products`);
-        if (!res.ok) throw new Error();
-        setProducts(await res.json());
-      } catch {
-        Alert.alert('Lỗi', 'Không tải được sản phẩm.');
+        const res = await fetch(`${API_BASE_URL}/products/get`);
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const responseData = await res.json();
+
+        if (responseData.success) {
+          const mappedProducts = responseData.data.map(p => ({ ...p, id: p._id }));
+          setProducts(mappedProducts);
+        } else {
+          throw new Error(responseData.message || 'Lỗi từ backend');
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        Alert.alert('Lỗi', 'Không tải được sản phẩm từ backend.');
       } finally {
         setLoading(false);
       }

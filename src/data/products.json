@@ -1,0 +1,83 @@
+[
+  {
+    "_id": "66ba1234567890abcdef0001",
+    "name": "T-Shirt Basic",
+    "price": 150000,
+    "category": "Áo thun",
+    "image": "https://image.uniqlo.com/UQ/ST3/WesternCommon/imagesgoods/472520/sub/goods_472520_sub15_3x4.jpg?width=600",
+    "description": "Cotton 100%, thoáng mát, thiết kế tối giản.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      "Trắng",
+      "Đen",
+      "Xanh"
+    ],
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  },
+  {
+    "_id": "66ba1234567890abcdef0002",
+    "name": "T-Shirt Premium",
+    "price": 250000,
+    "category": "Áo thun",
+    "image": "https://image.uniqlo.com/UQ/ST3/WesternCommon/imagesgoods/422990/item/goods_09_422990_3x4.jpg?width=600",
+    "description": "Chất liệu cao cấp, co giãn tốt, bền đẹp.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      "Trắng",
+      "Đen"
+    ],
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  },
+  {
+    "_id": "66ba1234567890abcdef0003",
+    "name": "Hoodie",
+    "price": 350000,
+    "category": "Áo khoác",
+    "image": "https://image.uniqlo.com/UQ/ST3/AsianCommon/imagesgoods/471616/sub/goods_471616_sub14_3x4.jpg?width=494",
+    "description": "Dày dặn, giữ ấm, phong cách streetwear.",
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      "Đen",
+      "Xám"
+    ],
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  },
+  {
+    "_id": "66ba1234567890abcdef0004",
+    "name": "Sweater",
+    "price": 320000,
+    "category": "Áo khoác",
+    "image": "https://image.uniqlo.com/UQ/ST3/AsianCommon/imagesgoods/469429/item/goods_67_469429_3x4.jpg?width=828",
+    "description": "Chất liệu len cao cấp, mềm mại, giữ nhiệt tốt trong thời tiết lạnh.",
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      "Xám",
+      "Xanh navy",
+      "Nâu"
+    ],
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  }
+]
