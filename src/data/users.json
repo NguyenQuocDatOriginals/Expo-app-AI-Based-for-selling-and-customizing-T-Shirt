@@ -1,0 +1,57 @@
+[
+  {
+    "_id": "66ba1234567890abcdef0001",
+    "username": "admin",
+    "fullname": "Nguyễn Văn Át Min",
+    "email": "admin@gmail.com",
+    "role": "admin",
+    "status": "active",
+    "password": "12345",
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  },
+  {
+    "_id": "66ba1234567890abcdef0002",
+    "username": "haotho.72",
+    "fullname": "Trầm Ngọc Thu Hằng",
+    "email": "tramthuhang83@gmail.com",
+    "role": "user",
+    "status": "active",
+    "password": "56789",
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  },
+  {
+    "_id": "66ba1234567890abcdef0003",
+    "username": "nguyenquoctuanoriginals",
+    "fullname": "Nguyễn Quốc Tuấn",
+    "email": "225cvt@gmail.com",
+    "role": "user",
+    "status": "inactive",
+    "password": "98765",
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  },
+  {
+    "_id": "66ba1234567890abcdef0004",
+    "username": "nguyenthikimtuyenoriginals",
+    "fullname": "Nguyễn Thị Kim Tuyến",
+    "email": "kimtuyenkhoasan@gmail.com",
+    "role": "user",
+    "status": "active",
+    "password": "56789",
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  },
+  {
+    "_id": "66ba1234567890abcdef0005",
+    "username": "nguyenquocdatoriginals",
+    "fullname": "Nguyễn Quốc Đạt",
+    "email": "datnqse172923@fpt.edu.vn",
+    "role": "user",
+    "status": "active",
+    "password": "12345",
+    "createdAt": "2024-07-19T13:00:00.000Z",
+    "updatedAt": "2024-07-19T13:00:00.000Z"
+  }
+]
