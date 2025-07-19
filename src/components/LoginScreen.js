@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles } from '../styles/globalStyles';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '@env';
 
 export default function LoginScreen({ navigation }) {
     const [identifier, setIdentifier] = useState('');
@@ -11,24 +12,39 @@ export default function LoginScreen({ navigation }) {
     const { setIsLoggedIn } = useContext(AuthContext);
 
     const handleLogin = async () => {
+        const trimmedIdentifier = identifier.trim().toLowerCase();
+        const trimmedPassword = password.trim();
+
+        if (!trimmedIdentifier || !trimmedPassword) {
+            Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ thông tin.');
+            return;
+        }
+
         try {
-            const res = await fetch('https://687321edc75558e273536526.mockapi.io/api/admin_users');
-            const users = await res.json();
+            console.log('Sending login request:', { identifier: trimmedIdentifier, password: trimmedPassword });
 
-            const user = users.find(
-                u =>
-                    (u.email.toLowerCase() === identifier.toLowerCase() ||
-                        u.username.toLowerCase() === identifier.toLowerCase()) &&
-                    u.password === password
-            );
+            const res = await fetch(`${API_BASE_URL}/users/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    identifier: trimmedIdentifier,
+                    password: trimmedPassword,
+                }),
+            });
 
-            if (user) {
+            const responseData = await res.json();
+            console.log('Login response:', responseData);
+
+            if (res.ok && responseData.success) {
                 setIsLoggedIn(true);
                 navigation.replace('Main');
             } else {
-                Alert.alert('Thông báo', 'Email/Tên người dùng hoặc mật khẩu không chính xác!');
+                Alert.alert('Thông báo', responseData.message || 'Đăng nhập thất bại. Kiểm tra thông tin.');
             }
         } catch (err) {
+            console.error('Login error:', err);
             Alert.alert('Lỗi', 'Không thể kết nối đến máy chủ.');
         }
     };
@@ -42,19 +58,19 @@ export default function LoginScreen({ navigation }) {
 
             <TouchableOpacity style={styles.backButton} onPress={handleBackToHome}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
-                <Text style={[styles.backButtonText, globalStyles.text]}>Trở về trang chủ</Text>
+                <Text style={[styles.backButtonText, globalStyles.text]}>Back to Home</Text>
             </TouchableOpacity>
 
             <View style={styles.container}>
-                <Text style={[styles.title, globalStyles.heading]}>ĐĂNG NHẬP</Text>
+                <Text style={[styles.title, globalStyles.heading]}>LOGIN</Text>
                 <Text style={[styles.subtitle, globalStyles.caption]}>
-                    Đăng nhập bằng email hoặc tên người dùng
+                    Login with your email or username
                 </Text>
 
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={[styles.input, globalStyles.input]}
-                        placeholder="Email hoặc tên người dùng"
+                        placeholder="Email or Username"
                         placeholderTextColor="#bdbdbd"
                         autoCapitalize="none"
                         value={identifier}
@@ -65,7 +81,7 @@ export default function LoginScreen({ navigation }) {
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={[styles.input, globalStyles.input]}
-                        placeholder="Mật khẩu"
+                        placeholder="Password"
                         placeholderTextColor="#bdbdbd"
                         secureTextEntry
                         value={password}
@@ -74,12 +90,12 @@ export default function LoginScreen({ navigation }) {
                 </View>
 
                 <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                    <Text style={[styles.buttonText, globalStyles.buttonText]}>Đăng nhập</Text>
+                    <Text style={[styles.buttonText, globalStyles.buttonText]}>Login</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                     <Text style={[styles.link, globalStyles.text]}>
-                        Chưa có tài khoản? Đăng ký
+                        Don't have an account? Register
                     </Text>
                 </TouchableOpacity>
             </View>

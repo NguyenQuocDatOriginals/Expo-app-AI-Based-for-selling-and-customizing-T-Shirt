@@ -27,7 +27,7 @@ export default function RegisterScreen({ navigation }) {
                     phonenumber,
                     email,
                     password,
-                    role: 'user',
+                    role: 'customer',
                     status: 'active',
                 }),
             });
