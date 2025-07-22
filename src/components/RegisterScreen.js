@@ -4,40 +4,46 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles } from '../styles/globalStyles';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '@env';
 
 export default function RegisterScreen({ navigation }) {
     const [username, setUsername] = useState('');
+    const [fullname, setFullname] = useState('');
+    const [phonenumber, setPhonenumber] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { setIsLoggedIn } = useContext(AuthContext);
 
     const handleRegister = async () => {
         try {
-            const res = await fetch('https://687321edc75558e273536526.mockapi.io/api/admin_users');
-            const users = await res.json();
-            const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-
-            if (exists) {
-                Alert.alert('Thông báo', 'Email đã tồn tại!');
-                return;
-            }
-
-            await fetch('https://687321edc75558e273536526.mockapi.io/api/admin_users', {
+            const res = await fetch(`${API_BASE_URL}/users/create`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
                     username,
+                    fullname,
+                    phonenumber,
                     email,
                     password,
-                    role: 'user',
+                    role: 'customer',
                     status: 'active',
                 }),
             });
 
-            setIsLoggedIn(true);
-            navigation.replace('Main');
+            const responseData = await res.json();
+
+            if (res.ok && responseData.success) {
+                setIsLoggedIn(true);
+                navigation.replace('Main');
+            } else {
+                const errorMessage = responseData.message || 'Không thể đăng ký. Vui lòng thử lại sau.';
+                Alert.alert('Thông báo', errorMessage);
+            }
         } catch (err) {
-            Alert.alert('Lỗi', 'Không thể đăng ký. Vui lòng thử lại sau.');
+            console.error('Register error:', err);
+            Alert.alert('Lỗi', 'Không thể kết nối đến máy chủ hoặc lỗi đăng ký.');
         }
     };
 
@@ -50,20 +56,41 @@ export default function RegisterScreen({ navigation }) {
 
             <TouchableOpacity style={styles.backButton} onPress={handleBackToHome}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
-                <Text style={[styles.backButtonText, globalStyles.text]}>Trở về trang chủ</Text>
+                <Text style={[styles.backButtonText, globalStyles.text]}>Back to Home</Text>
             </TouchableOpacity>
 
             <View style={styles.container}>
-                <Text style={[styles.title, globalStyles.heading]}>ĐĂNG KÝ</Text>
-                <Text style={[styles.subtitle, globalStyles.caption]}>Tạo tài khoản của bạn</Text>
+                <Text style={[styles.title, globalStyles.heading]}>REGISTER</Text>
+                <Text style={[styles.subtitle, globalStyles.caption]}>Create your account</Text>
 
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={[styles.input, globalStyles.input]}
-                        placeholder="Tên người dùng"
+                        placeholder="Username"
                         placeholderTextColor="#bdbdbd"
                         value={username}
                         onChangeText={setUsername}
+                    />
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={[styles.input, globalStyles.input]}
+                        placeholder="Full name"
+                        placeholderTextColor="#bdbdbd"
+                        value={fullname}
+                        onChangeText={setFullname}
+                    />
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={[styles.input, globalStyles.input]}
+                        placeholder="Phone number"
+                        placeholderTextColor="#bdbdbd"
+                        keyboardType="phone-pad"
+                        value={phonenumber}
+                        onChangeText={setPhonenumber}
                     />
                 </View>
 
@@ -82,7 +109,7 @@ export default function RegisterScreen({ navigation }) {
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={[styles.input, globalStyles.input]}
-                        placeholder="Mật khẩu"
+                        placeholder="Password"
                         placeholderTextColor="#bdbdbd"
                         secureTextEntry
                         value={password}
@@ -91,12 +118,12 @@ export default function RegisterScreen({ navigation }) {
                 </View>
 
                 <TouchableOpacity style={styles.button} onPress={handleRegister}>
-                    <Text style={[styles.buttonText, globalStyles.buttonText]}>Đăng ký</Text>
+                    <Text style={[styles.buttonText, globalStyles.buttonText]}>Register</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                     <Text style={[styles.link, globalStyles.text]}>
-                        Đã có tài khoản? Đăng nhập
+                        Already have an account? Login
                     </Text>
                 </TouchableOpacity>
             </View>
