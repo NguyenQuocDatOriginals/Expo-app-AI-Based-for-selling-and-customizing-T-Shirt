@@ -32,12 +32,6 @@ export default function Profile({ navigation }) {
                     <Ionicons name="chevron-forward" size={24} color="#ccc" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Notifications')}>
-                    <Ionicons name="notifications-outline" size={24} color="#1a1446" />
-                    <Text style={styles.menuText}>Notifications</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#ccc" />
-                </TouchableOpacity>
-
                 <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('PrivacySecurity')}>
                     <Ionicons name="lock-closed-outline" size={24} color="#1a1446" />
                     <Text style={styles.menuText}>Privacy & Security</Text>
@@ -51,18 +45,6 @@ export default function Profile({ navigation }) {
                 <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyOrders')}>
                     <Ionicons name="bag-outline" size={24} color="#1a1446" />
                     <Text style={styles.menuText}>My Orders</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#ccc" />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Favorites')}>
-                    <Ionicons name="heart-outline" size={24} color="#1a1446" />
-                    <Text style={styles.menuText}>Favorites</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#ccc" />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('PaymentMethods')}>
-                    <Ionicons name="card-outline" size={24} color="#1a1446" />
-                    <Text style={styles.menuText}>Payment Methods</Text>
                     <Ionicons name="chevron-forward" size={24} color="#ccc" />
                 </TouchableOpacity>
             </View>
